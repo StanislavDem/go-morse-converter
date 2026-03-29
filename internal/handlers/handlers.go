@@ -6,31 +6,25 @@ import (
     "os"
     "path/filepath"
     "time"
-	"log"
 
     "github.com/Yandex-Practicum/go1fl-sprint6-final/internal/service"
 )
 
-type Handlers struct {
-    Logger *log.Logger
-}
-
 // Корневой эндпоинт ./
-func (h *Handlers) IndexHandler(w http.ResponseWriter, r *http.Request) {
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, "index.html")
 }
 // Эндпоинт ./upload, принимает файл из формы index.html, конвертирует его содержимое и возвращает результат.
-func (h *Handlers) UploadHandler(w http.ResponseWriter, r *http.Request) {
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	// парсим форму
     err := r.ParseMultipartForm(10 << 20) // multipart/form-data, лимит 10 MB
     if err != nil {
-        http.Error(w, "Ошибка парсинга формы", http.StatusInternalServerError)
+        http.Error(w, "Ошибка парсинга формы", http.StatusBadRequest)
         return
     }
 	// получаем файл
     file, handler, err := r.FormFile("myFile") // из формы index.html
     if err != nil {
-		h.Logger.Printf("Ошибка получения файла: %v", err) // вывод ошибки в консоль (временно для отладки)
         http.Error(w, "Ошибка получения файла", http.StatusInternalServerError)
         return
     }
@@ -44,8 +38,7 @@ func (h *Handlers) UploadHandler(w http.ResponseWriter, r *http.Request) {
 	// передаем содержимое в func AutoConvert
     result, err := service.AutoConvert(string(data))
     if err != nil {
-		h.Logger.Printf("Ошибка конвертации: %v", err) // вывод ошибки в консоль (временно для отладки)
-        http.Error(w, "Ошибка конвертации", http.StatusInternalServerError)
+        http.Error(w, "Ошибка конвертации", http.StatusBadRequest)
         return
     }
 	// создаём локальный файл с результатом
@@ -56,6 +49,5 @@ func (h *Handlers) UploadHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 	// возвращаем результат
-	h.Logger.Printf("Результат конвертации: %s", result) // вывод результата в консоль (временно для отладки)
     w.Write([]byte(result))
 }
